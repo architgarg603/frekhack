@@ -29,7 +29,7 @@ export default function Hero() {
                 zIndex: -1,
               }}
             >
-              Grammafy
+              Grammatica
             </Text>
             <br />{" "}
             <Text color={"yellow.400"} as={"span"}>

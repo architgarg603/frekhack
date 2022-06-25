@@ -58,7 +58,7 @@ export default function Navbar() {
             fontWeight="bold"
             color={useColorModeValue("gray.800", "white")}
           >
-            Grammafy
+            Grammatica
           </Text>
 
           <Flex display={{ base: "none", md: "flex" }} ml={10}>
