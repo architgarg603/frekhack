@@ -1,6 +1,15 @@
 import MicRecorder from "mic-recorder-to-mp3";
 import { useEffect, useState, useRef } from "react";
-import { Textarea, Button, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Textarea,
+  Button,
+  Text,
+  Spinner,
+  Container,
+  HStack,
+  VStack,
+} from "@chakra-ui/react";
 import axios from "axios";
 
 const assembly = axios.create({
@@ -125,33 +134,41 @@ const Write = () => {
     settext(inputValue);
   };
   return (
-    <>
-      <Textarea
-        value={text}
-        onChange={handleInputChange}
-        placeholder="Write/paste any content..."
-        size="sm"
-      />
-      <Button onClick={checkGrammar}>Check</Button>
-      <Text>{res}</Text>
-      <h1>React Speech Recognition App</h1>
-      <audio ref={audioPlayer} src={blobURL} controls="controls" />
-      <div>
-        <button disabled={isRecording} onClick={startRecording}>
-          START
-        </button>
-        <button disabled={!isRecording} onClick={stopRecording}>
-          STOP
-        </button>
-        <button onClick={submitTranscriptionHandler}>Submit</button>
-        <button onClick={checkStatusHandler}>CHECK STATUS</button>
-        {transcriptData.status === "completed" ? (
-          <p>{transcript}</p>
-        ) : (
-          <p>{transcriptData.status}</p>
-        )}
-      </div>
-    </>
+    <Container minW="container.md" py="12">
+      <Box pt="12"></Box>
+      <VStack mt="12">
+        <Textarea
+          value={text}
+          onChange={handleInputChange}
+          placeholder="Write/paste any content..."
+          size="sm"
+        />
+        <HStack>
+          <Button colorScheme={"yellow"} onClick={checkGrammar}>
+            Check
+          </Button>
+          <Button>Reset</Button>
+        </HStack>
+        <Text>{res}</Text>
+
+        <audio ref={audioPlayer} src={blobURL} controls="controls" />
+        <HStack>
+          <Button disabled={isRecording} onClick={startRecording}>
+            Start Recording
+          </Button>
+          <Button disabled={!isRecording} onClick={stopRecording}>
+            Stop Recording
+          </Button>
+          <Button
+            disabled={!isRecording}
+            onClick={submitTranscriptionHandler}
+            colorScheme="yellow"
+          >
+            Submit Recording
+          </Button>
+        </HStack>
+      </VStack>
+    </Container>
   );
 };
 
