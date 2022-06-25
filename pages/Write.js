@@ -1,7 +1,10 @@
+import parse from 'html-react-parser';
+import textgears from 'textgears-api';
 import MicRecorder from "mic-recorder-to-mp3";
 import { useEffect, useState, useRef } from "react";
 import { Textarea, Button, Text } from "@chakra-ui/react";
 import axios from "axios";
+const textgearsApi = textgears('Ymds03gpot0vbQ3v', { language: 'en-US' });
 
 const assembly = axios.create({
   baseURL: "https://api.assemblyai.com/v2",
@@ -14,6 +17,8 @@ const assembly = axios.create({
 
 const Write = () => {
   const [text, settext] = useState("Sam are off to garden.");
+  const [correction, setCOrrection] = useState("");
+  const [suggestion, setSuggestions] = useState("");
   const [res, setRes] = useState("");
   // Mic-Recorder-To-MP3
   const recorder = useRef(null); //Recorder
@@ -79,16 +84,18 @@ const Write = () => {
       .then((res) => {
         setTranscriptID(res.data.id);
 
-        checkStatusHandler();
+        checkStatusHandler(res.data.id);
       })
       .catch((err) => console.error(err));
   };
 
   // Check the status of the Transcript
-  const checkStatusHandler = async () => {
+  const checkStatusHandler = async (id = transcriptID) => {
+    console.log(id, transcriptID)
+    if(!id)return
     setIsLoading(true);
     try {
-      await assembly.get(`/transcript/${transcriptID}`).then((res) => {
+      await assembly.get(`/transcript/${id}`).then((res) => {
         setTranscriptData(res.data);
       });
     } catch (err) {
@@ -103,22 +110,39 @@ const Write = () => {
         checkStatusHandler();
       } else {
         setIsLoading(false);
-        setTranscript(transcriptData.text);
-        settext(transcriptData.text);
+        if (transcriptData?.text) {
+          setTranscript(transcriptData.text);
+          settext(transcriptData.text);
+        }
         clearInterval(interval);
       }
     }, 1000);
     return () => clearInterval(interval);
   });
-  const checkGrammar = async () => {
-    try {
-      const res = await axios.post("/api/check", {
-        text,
-      });
-      setRes(res.data.matches[0].message);
-    } catch (err) {
-      console.log(err);
-    }
+  const checkGrammar = () => {
+    // setRes(res.data.matches[0].message);
+    textgearsApi.checkGrammar(text)
+      .then((data) => {
+        console.log(data)
+        for (const error of data.response.errors) {
+          console.log('Error: %s. Suggestions: %s', error.bad, error.better.join(', '));
+        }
+        let err = data.response.errors;
+        let ans = text;
+        let sug = ""
+        for (let i = err.length - 1; i >= 0; i--) {
+            let st = ans.substring(0,err[i].offset);
+            let str = ans.substring(err[i].offset,err[i].offset+err[i].length );
+            let ed = ans.substring(err[i].offset+ err[i].length);
+
+            ans = `${st}<span>${str}</span>${ed}`
+            sug = `Word: ${err[i].bad},  Suggestions: ${err[i].better} \n description: ${err[i].description.en} \n` + sug
+        }
+        setSuggestions(sug)
+        setCOrrection(ans);
+
+      })
+      .catch((err) => { });
   };
   let handleInputChange = (e) => {
     let inputValue = e.target.value;
@@ -132,6 +156,12 @@ const Write = () => {
         placeholder="Write/paste any content..."
         size="sm"
       />
+      <div>
+        {parse(correction)}
+      </div>
+      <div>
+        {suggestion}
+      </div>
       <Button onClick={checkGrammar}>Check</Button>
       <Text>{res}</Text>
       <h1>React Speech Recognition App</h1>
